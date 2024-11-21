@@ -1,5 +1,4 @@
 name: DevSecOps CI Pipeline for Juice Shop
-
 on:
   push:
     branches:
@@ -7,26 +6,22 @@ on:
   pull_request:
     branches:
       - master
-
 permissions:
   contents: read
   security-events: write
   actions: read
-
 jobs:
   build-and-test:
     name: Build and Test
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # CodeQL Setup for SAST
       - name: SAST using CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: javascript  # Use 'javascript' since Juice Shop is a Node.js app
+          languages: javascript 
           queries: security-extended
           config: |
             paths-ignore:
@@ -42,3 +37,28 @@ jobs:
           name: codeql-scan-results
           path: .
 
+      # Set up Java for Dependency Check
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin' # Popular distribution of OpenJDK
+          java-version: '17'      # LTS version
+
+      - name: OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME }} # Using the Java path set by setup-java action
+        with:
+          project: 'Juice Shop'
+          path: '.'
+          format: 'SARIF'
+          out: 'reports'
+          args: >
+            --enableRetired
+            --enableExperimental
+
+      - name: Upload Dependency Check Results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: reports/dependency-check-report.sarif
