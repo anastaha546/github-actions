@@ -26,6 +26,16 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Build Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: juice-shop:latest
           
       - name: SAST using CodeQL
         uses: github/codeql-action/init@v3
@@ -47,4 +57,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: codeql-scan-results
-          path: ./codeql-results
+          path: .
