@@ -52,10 +52,11 @@ jobs:
         with:
           category: "/language:${{ matrix.language }}"
           
-      - name: SCA analysis
-        uses: actions/dependency-review-action@v3
-        with:
-          fail-on-severity: high
+      - name: Initialize SCA
+        uses: github/dependency-scanning-action/init@v1
+        
+      - name: Perform SCA
+        uses: github/dependency-scanning-action@v1
           
       - name: Upload CodeQL Results
         if: always()
