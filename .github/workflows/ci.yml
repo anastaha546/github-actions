@@ -1,4 +1,5 @@
-name: Devsecops CI pipeline for juiceshop
+name: DevSecOps CI Pipeline for Juice Shop
+
 on:
   push:
     branches:
@@ -6,61 +7,57 @@ on:
   pull_request:
     branches:
       - master
-      
+
 permissions:
   contents: read
   security-events: write
   actions: read
 
-
-  
 jobs:
   build-and-test:
     name: Build and Test
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        language: [ 'javascript-typescript' ]
-        
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # - name: Set up Docker Buildx
-      #   uses: docker/setup-buildx-action@v3
-        
-      # - name: Build Docker Image
-      #   uses: docker/build-push-action@v5
-      #   with:
-      #     context: .
-      #     load: true
-      #     tags: juice-shop:latest
-          
+      # CodeQL Setup for SAST
       - name: SAST using CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: ${{ matrix.language }}
+          languages: javascript  # Use 'javascript' since Juice Shop is a Node.js app
           queries: security-extended
           config: |
             paths-ignore:
               - 'data/static/codefixes'
 
-          
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:${{ matrix.language }}"
-          
-      - name: Initialize SCA
-        uses: github/dependency-scanning-action/init@v1
-        
-      - name: Perform SCA
-        uses: github/dependency-scanning-action@v1
-          
+
       - name: Upload CodeQL Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: codeql-scan-results
-          path: .
+          path: ./github/workspace/codeql-results
+
+      # Node.js setup and dependency analysis (SCA)
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run npm audit
+        run: |
+          npm audit --json > audit-report.json
+        continue-on-error: true 
+
+      - name: Upload npm audit results
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-results
+          path: audit-report.json
