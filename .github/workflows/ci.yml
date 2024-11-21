@@ -1,5 +1,4 @@
 name: Devsecops CI pipeline for juiceshop
-
 on:
   push:
     branches:
@@ -7,12 +6,14 @@ on:
   pull_request:
     branches:
       - master
-
+      
 permissions:
   contents: read
   security-events: write
   actions: read
 
+
+  
 jobs:
   build-and-test:
     name: Build and Test
@@ -21,20 +22,10 @@ jobs:
       fail-fast: false
       matrix:
         language: [ 'javascript-typescript' ]
-
+        
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      #- name:  Set up Docker Buildx
-        #uses: docker/setup-buildx-action@v3
-        
-      # - name: Build Docker Image
-      #   uses: docker/build-push-action@v5
-      #   with:
-          # context: .
-          # load: true
-          # tags: juice-shop:latest
           
       - name: SAST using CodeQL
         uses: github/codeql-action/init@v3
@@ -44,24 +35,29 @@ jobs:
           config: |
             paths-ignore:
               - 'data/static/codefixes'
+
           
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
-
+        with:
+          category: "/language:${{ matrix.language }}"
+          output: sarif-results
+          
       - name: Debug - List Files
         run: |
           ls -la ${{ github.workspace }}
           find ${{ github.workspace }} -name "*.sarif"
+          
       - name: Upload SARIF results
         uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        continue-on-error: true
         with:
-          sarif_file: ${{ github.workspace }}/results/javascript-typescript.sarif
-
+          sarif_file: sarif-results/${{ matrix.language }}.sarif
+          
       - name: Upload CodeQL Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: codeql-scan-results
-          path: ${{ github.workspace }}/results
-
-      
+          path: sarif-results
