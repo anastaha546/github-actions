@@ -17,6 +17,10 @@ jobs:
   build-and-test:
     name: Build and Test
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'javascript-typescript' ]
 
     steps:
       - name: Checkout Code
@@ -35,12 +39,26 @@ jobs:
       - name: SAST using CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: javascript
+          languages: ${{ matrix.language }}
+          queries: security-extended
+          config: |
+            paths-ignore:
+              - 'data/static/codefixes'
           
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
 
+      - name: Debug - List Files
+        run: |
+          ls -la ${{ github.workspace }}
+          find ${{ github.workspace }} -name "*.sarif"
+      - name: Upload SARIF results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ github.workspace }}/results/javascript-typescript.sarif
+
       - name: Upload CodeQL Results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: codeql-scan-results
