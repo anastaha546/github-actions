@@ -37,28 +37,33 @@ jobs:
           name: codeql-scan-results
           path: .
 
-      # Set up Java for Dependency Check
+      # Set up Java properly
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin' # Popular distribution of OpenJDK
-          java-version: '17'      # LTS version
+          distribution: 'temurin'
+          java-version: '17'
 
+      # Run OWASP Dependency Check
       - name: OWASP Dependency Check
         uses: dependency-check/Dependency-Check_Action@main
-        env:
-          JAVA_HOME: ${{ env.JAVA_HOME }} # Using the Java path set by setup-java action
         with:
           project: 'Juice Shop'
           path: '.'
           format: 'SARIF'
-          out: 'reports'
+          out: './dependency-check-reports'    # Changed output directory
           args: >
             --enableRetired
             --enableExperimental
+
+      # Debug step to verify report generation
+      - name: List Reports
+        run: |
+          ls -la
+          ls -la dependency-check-reports/ || echo "Reports directory not found"
 
       - name: Upload Dependency Check Results
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif_file: dependency-check-report.sarif
+          sarif_file: dependency-check-reports/dependency-check-report.sarif
