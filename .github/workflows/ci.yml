@@ -44,6 +44,7 @@ jobs:
           project: JuiceShop
           path: "."
           out: "."
+          args: "--exclude ../../ftp/legal.md --exclude ../../frontend/dist/frontend/assets/public/videos/owasp_promo.vtt"
 
       - name: Upload Dependency Check Report
         if: always()
