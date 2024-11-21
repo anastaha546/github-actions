@@ -1,1 +1,21 @@
+name: Devsecops CI pipeline for juiceshop app
 
+on:
+  push:
+    branches:
+      -main
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Build Docker Image
+        run: |
+          docker build -t juice-shope:latest .
+
+      
