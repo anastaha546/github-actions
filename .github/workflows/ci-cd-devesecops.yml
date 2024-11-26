@@ -1,4 +1,4 @@
-name: Devsecops cicd pipeline
+name: Devsecops CICD pipeline
 on: 
   push:
     branches:
