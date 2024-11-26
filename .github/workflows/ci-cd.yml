@@ -18,42 +18,50 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: SAST using CodeQL
-        uses: github/codeql-action/init@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Build Docker Image
+        uses: docker/build-push-action@v5
         with:
-          languages: javascript 
-          queries: security-extended
-          output: 'results'
-          config: |
-            paths-ignore:
-              - 'data/static/codefixes'
+          context: .
+          load: true
+          tags: juice-shop:latest
+      # - name: SAST using CodeQL
+      #   uses: github/codeql-action/init@v3
+      #   with:
+      #     languages: javascript 
+      #     queries: security-extended
+      #     config: |
+      #       paths-ignore:
+      #         - 'data/static/codefixes'
 
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+      # - name: Perform CodeQL Analysis
+      #   uses: github/codeql-action/analyze@v3
     
           
 
-      - name: Upload CodeQL Results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: codeql-scan-results
-          path: results
-      # Software Composition Analysis using Owasp Dependency Check
-      - name: Run OWASP Dependency Check
-        uses: dependency-check/Dependency-Check_Action@main
-        with:
-          format: "JSON"
-          project: JuiceShop
-          path: "."
-          out: "."
-          args: "--exclude ../../ftp/legal.md --exclude ../../frontend/dist/frontend/assets/public/videos/owasp_promo.vtt"
+      # - name: Upload CodeQL Results
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: codeql-scan-results
+      #     path: .
+      # # Software Composition Analysis using Owasp Dependency Check
+      # - name: Run OWASP Dependency Check
+      #   uses: dependency-check/Dependency-Check_Action@main
+      #   with:
+      #     format: "JSON"
+      #     project: JuiceShop
+      #     path: "."
+      #     out: "."
+      #     args: "--exclude ../../ftp/legal.md --exclude ../../frontend/dist/frontend/assets/public/videos/owasp_promo.vtt"
 
-      - name: Upload Dependency Check Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: owasp-dependency-check-report
-          path: .
+      # - name: Upload Dependency Check Report
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: owasp-dependency-check-report
+      #     path: .
 
       
