@@ -3,16 +3,18 @@ name: SCA Job
 on:
   workflow_call: 
     inputs: {}
+permissions:
+  contents: write
+  security-events: write
+  actions: write
+  issues: write
 
 
 jobs:
   sca:
-    name: Software Composition Analysis (SCA) with OWASP Dependency Check
+    name: Perform Software Composition Analysis (SCA) with OWASP Dependency Check
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
       - name: Run OWASP Dependency Check
         uses: dependency-check/Dependency-Check_Action@main
         with:
@@ -27,4 +29,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: owasp-dependency-check-report
-          path: .
+          path: dependency-check-report.json
