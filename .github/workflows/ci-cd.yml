@@ -43,10 +43,26 @@ jobs:
           done
           echo "Juice Shop failed to start."
           exit 1
+      # Step 6: Run Dynamic Application Security Testing (DAST)
+      - name: Run DAST with OWASP ZAP
+        run: |
+          docker run -t owasp/zap2docker-stable zap-baseline.py \
+            -t http://localhost:3000 -r zap_report.html
+
+      # Step 7: Upload DAST Report
+      - name: Upload OWASP ZAP Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: zap_report.html
       
       - name: Stop and Remove Juice Shop Container
         if: always()
         run: docker stop juice-shop && docker rm juice-shop
+
+
+      
       # - name: SAST using CodeQL
       #   uses: github/codeql-action/init@v3
       #   with:
