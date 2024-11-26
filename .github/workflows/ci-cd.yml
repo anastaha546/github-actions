@@ -10,6 +10,7 @@ permissions:
   contents: write
   security-events: write
   actions: write
+  issues: write
 jobs:
   build-and-test:
     name: Build and Test
