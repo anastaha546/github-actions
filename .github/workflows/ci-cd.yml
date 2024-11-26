@@ -1,4 +1,4 @@
-name: DevSecOps CI Pipeline for Juice Shop
+name: DevSecOps CI CD Pipeline for Juice Shop
 on:
   push:
     branches:
