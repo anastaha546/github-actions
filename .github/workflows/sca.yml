@@ -1,0 +1,29 @@
+name: SCA Job
+
+on:
+  workflow_call: 
+    inputs: {}
+
+
+jobs:
+  sca:
+    name: Software Composition Analysis (SCA) with OWASP Dependency Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          format: "JSON"
+          project: JuiceShop
+          path: "."
+          out: "."
+          args: "--exclude ../../ftp/legal.md --exclude ../../frontend/dist/frontend/assets/public/videos/owasp_promo.vtt"
+
+      - name: Upload Dependency Check Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: dependency-check-report.json
