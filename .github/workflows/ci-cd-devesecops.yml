@@ -23,49 +23,49 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: javascript
-          queries: security-extended
+      # - name: Set up CodeQL
+      #   uses: github/codeql-action/init@v3
+      #   with:
+      #     languages: javascript
+      #     queries: security-extended
          
-          config: |
-            paths-ignore:
-              - 'data/static/codefixes'
+      #     config: |
+      #       paths-ignore:
+      #         - 'data/static/codefixes'
 
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+      # - name: Perform CodeQL Analysis
+      #   uses: github/codeql-action/analyze@v3
+      #   with:
+      #     output: codeql-results.sarif
+
+      # - name: Upload CodeQL Results
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: codeql-scan-results
+      #     path: codeql-results.sarif
+
+  # Job 2: Software Composition Analysis (SCA) using OWASP Dependency Check
+  dependency_check:
+    name: Perform Software Composition Analysis (SCA) with OWASP Dependency Check
+    runs-on: ubuntu-latest
+    needs: codeql_analysis  # Ensures that this job runs after 'codeql_analysis'
+    steps:
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
         with:
-          output: codeql-results.sarif
+          format: "JSON"
+          project: JuiceShop
+          path: "."
+          out: "."
+          args: "--exclude ../../ftp/legal.md --exclude ../../frontend/dist/frontend/assets/public/videos/owasp_promo.vtt"
 
-      - name: Upload CodeQL Results
+      - name: Upload Dependency Check Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: codeql-scan-results
-          path: codeql-results.sarif
-
-  # # Job 2: Software Composition Analysis (SCA) using OWASP Dependency Check
-  # dependency_check:
-  #   name: Perform Software Composition Analysis (SCA) with OWASP Dependency Check
-  #   runs-on: ubuntu-latest
-  #   needs: codeql_analysis  # Ensures that this job runs after 'codeql_analysis'
-  #   steps:
-  #     - name: Run OWASP Dependency Check
-  #       uses: dependency-check/Dependency-Check_Action@main
-  #       with:
-  #         format: "JSON"
-  #         project: JuiceShop
-  #         path: "."
-  #         out: "."
-  #         args: "--exclude ../../ftp/legal.md --exclude ../../frontend/dist/frontend/assets/public/videos/owasp_promo.vtt"
-
-  #     - name: Upload Dependency Check Report
-  #       if: always()
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: owasp-dependency-check-report
-  #         path: .
+          name: owasp-dependency-check-report
+          path: dependency-check-report.json
 
 
           
