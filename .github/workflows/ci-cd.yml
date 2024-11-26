@@ -7,9 +7,9 @@ on:
     branches:
       - master
 permissions:
-  contents: read
+  contents: write
   security-events: write
-  actions: read
+  actions: write
 jobs:
   build-and-test:
     name: Build and Test
@@ -44,18 +44,18 @@ jobs:
           echo "Juice Shop failed to start."
           exit 1
       # Step 6: Run Dynamic Application Security Testing (DAST)
-      - name: Run DAST with OWASP ZAP
-        run: |
-          docker run -t owasp/zap2docker-stable zap-baseline.py \
-            -t http://localhost:3000 -r zap_report.html
-
-      # Step 7: Upload DAST Report
-      - name: Upload OWASP ZAP Report
-        if: always()
-        uses: actions/upload-artifact@v4
+      - name: ZAP Scan
+        uses: zaproxy/action-full-scan@v0.12.0
         with:
-          name: zap-report
-          path: zap_report.html
+          token: ${{ secrets.GITHUB_TOKEN }}
+          docker_name: 'ghcr.io/zaproxy/zaproxy:stable'
+          target: 'http://localhost:3000'
+          rules_file_name: '.zap/rules.tsv'
+      - name: Upload zap results as artifact
+        uses: actions/upload-artifact@v4
+        with: 
+          name: zap-results
+          path: /home/runner/work/github-actions/github-actions/*.html
       
       - name: Stop and Remove Juice Shop Container
         if: always()
