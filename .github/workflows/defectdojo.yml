@@ -1,0 +1,95 @@
+name: DefectDojo Integration
+
+on:
+  workflow_call: 
+    inputs: {}
+
+
+jobs:
+  defectdojo_job:
+    name: Upload Scan Results to DefectDojo
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start DefectDojo Instance
+        run: |
+          docker run -d --name defectdojo -p 8080:8080 defectdojo/defectdojo-django:latest
+          echo "Waiting for DefectDojo to initialize..."
+          sleep 60  # Allow time for DefectDojo to start
+
+      - name: Get DefectDojo API Key
+        id: get_api_key
+        run: |
+          API_URL="http://localhost:8080/api/v2/"
+          ADMIN_USERNAME="admin"
+          ADMIN_PASSWORD="admin"
+
+          # Log in to get API token
+          RESPONSE=$(curl -X POST "${API_URL}login/" \
+            -H "Content-Type: application/json" \
+            -d "{\"username\": \"${ADMIN_USERNAME}\", \"password\": \"${ADMIN_PASSWORD}\"}")
+          API_KEY=$(echo $RESPONSE | jq -r '.token')
+          echo "DOJO_API_KEY=${API_KEY}" >> $GITHUB_ENV
+
+      - name: Create Engagement in DefectDojo
+        id: create_engagement
+        run: |
+          API_URL="http://localhost:8080/api/v2/"
+          PRODUCT_ID=1  # Change this if a different product ID is needed
+
+          RESPONSE=$(curl -X POST "${API_URL}engagements/" \
+            -H "Authorization: Token ${{ env.DOJO_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"name\": \"Juice Shop CI Engagement\", \"product\": ${PRODUCT_ID}, \"status\": \"In Progress\"}")
+          ENGAGEMENT_ID=$(echo $RESPONSE | jq -r '.id')
+          echo "ENGAGEMENT_ID=${ENGAGEMENT_ID}" >> $GITHUB_ENV
+
+      - name: Download CodeQL Results
+        uses: actions/download-artifact@v4
+        with:
+          name: codeql-scan-results
+          path: .
+
+      - name: Upload CodeQL Results to DefectDojo
+        run: |
+          curl -X POST "http://localhost:8080/api/v2/import-scan/" \
+            -H "Authorization: Token ${{ env.DOJO_API_KEY }}" \
+            -H "Content-Type: multipart/form-data" \
+            -F "scan_type=CodeQL" \
+            -F "file=@codeql-results.sarif" \
+            -F "engagement=${{ env.ENGAGEMENT_ID }}"
+
+      - name: Download Dependency Check Results
+        uses: actions/download-artifact@v4
+        with:
+          name: owasp-dependency-check-report
+          path: .
+
+      - name: Upload Dependency Check Results to DefectDojo
+        run: |
+          curl -X POST "http://localhost:8080/api/v2/import-scan/" \
+            -H "Authorization: Token ${{ env.DOJO_API_KEY }}" \
+            -H "Content-Type: multipart/form-data" \
+            -F "scan_type=Dependency Check" \
+            -F "file=@dependency-check-report.json" \
+            -F "engagement=${{ env.ENGAGEMENT_ID }}"
+
+      - name: Download ZAP Results
+        uses: actions/download-artifact@v4
+        with:
+          name: zap-results
+          path: .
+
+      - name: Upload ZAP Results to DefectDojo
+        run: |
+          curl -X POST "http://localhost:8080/api/v2/import-scan/" \
+            -H "Authorization: Token ${{ env.DOJO_API_KEY }}" \
+            -H "Content-Type: multipart/form-data" \
+            -F "scan_type=ZAP Scan" \
+            -F "file=@zap-results.html" \
+            -F "engagement=${{ env.ENGAGEMENT_ID }}"
+
+      - name: Stop and Remove DefectDojo Instance
+        if: always()
+        run: |
+          docker stop defectdojo
+          docker rm defectdojo
