@@ -6,7 +6,13 @@ on:
   pull_request:
     branches:
       - master
-
+      
+permissions:
+  contents: write
+  security-events: write
+  actions: write
+  issues: write
+  
 jobs:
   sast_job:
     name: Static Application Security Testing (SAST)
