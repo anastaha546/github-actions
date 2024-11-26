@@ -82,15 +82,25 @@ jobs:
           context: .
           load: true
           tags: juice-shop:latest
-
-  # Job 4: Deploy Juice Shop
-  deploy:
-    name: Deploy Juice Shop
+          
+  # Job 3: Build, Deploy, and Scan with ZAP
+  build_deploy_and_zap_scan:
+    name: Build, Deploy, and Run ZAP Scan for Juice Shop
     runs-on: ubuntu-latest
-    needs: build  # Ensures that this job runs after the 'build' job
+    needs: dependency_check  # Ensures that this job runs after 'dependency_check'
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: juice-shop:latest
 
       - name: Deploy Juice Shop
         run: docker run -d --name juice-shop -p 3000:3000 juice-shop:latest
@@ -108,12 +118,7 @@ jobs:
           echo "Juice Shop failed to start."
           exit 1
 
-  # Job 5: Dynamic Application Security Testing (DAST) with ZAP
-  zap_scan:
-    name: Run ZAP Dynamic Application Security Testing (DAST)
-    runs-on: ubuntu-latest
-    needs: deploy  # Ensures that this job runs after the 'deploy' job
-    steps:
+      # Step 6: Run Dynamic Application Security Testing (DAST) with ZAP
       - name: Run ZAP Scan
         uses: zaproxy/action-full-scan@v0.12.0
         with:
