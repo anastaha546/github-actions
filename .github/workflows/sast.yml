@@ -1,0 +1,29 @@
+name: SAST Job
+
+on:
+  workflow_call: 
+    inputs: {}
+
+jobs:
+  sast:
+    name: Static Application Security Testing (SAST) with CodeQL
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          output: codeql-results.sarif
+
+      - name: Upload CodeQL Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-scan-results
+          path: codeql-results.sarif
